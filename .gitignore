@@ -5,7 +5,7 @@ backend/obj/
 # Node / React
 front-end/node_modules/
 front-end/dist/
-
+node_modules/
 # IDE
 .vs/
 .vscode/
