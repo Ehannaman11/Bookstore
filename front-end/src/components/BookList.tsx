@@ -1,30 +1,57 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import type { Book } from '../types/Book';
+import { useCart } from '../context/CartContext';
+
 
 function BookList() {
+  // ---------- Router hooks (must come before useState that uses location) ----------
+  const navigate = useNavigate();
+  const location = useLocation();
+
   // ---------- State ----------
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [books, setBooks] = useState<Book[]>([]);
   const [pageSize, setPageSize] = useState<number>(5);
-  const [pageNum, setPageNum] = useState<number>(1);
+  const [pageNum, setPageNum] = useState<number>(location.state?.page ?? 1);
   const [totalItems, setTotalItems] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [sortOrder, setSortOrder] = useState<string>('asc');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>(location.state?.category ?? '');
+  const [categories, setCategories] = useState<string[]>([]);
+  const [toastVisible, setToastVisible] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string>('');
+
+  // ---------- Cart ----------
+  const { addToCart, cartCount } = useCart();
 
   // ---------- Data fetching ----------
   useEffect(() => {
     const fetchBooks = async () => {
-      const url = `http://localhost:4000/api/books?pageSize=${pageSize}&pageNum=${pageNum}&sortOrder=${sortOrder}&searchQuery=${encodeURIComponent(searchQuery)}`;
+      setIsLoading(true);
+      const url = `http://localhost:4000/api/books?pageSize=${pageSize}&pageNum=${pageNum}&sortOrder=${sortOrder}&searchQuery=${encodeURIComponent(searchQuery)}&bookCategory=${encodeURIComponent(selectedCategory)}`;
       const response = await fetch(url);
       const data = await response.json();
 
       setBooks(data.books);
       setTotalItems(data.totalNumBooks);
       setTotalPages(Math.ceil(data.totalNumBooks / pageSize));
+      setIsLoading(false);
     };
 
     fetchBooks();
-  }, [pageSize, pageNum, sortOrder, searchQuery, totalItems]);
+  }, [pageSize, pageNum, sortOrder, searchQuery, totalItems, selectedCategory]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const response = await fetch('http://localhost:4000/api/books/categories');
+      const data = await response.json();
+      setCategories(data);
+    };
+
+    fetchCategories();
+  }, []);
 
   // ---------- Handlers ----------
   const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -42,9 +69,24 @@ function BookList() {
     setPageNum(1);
   };
 
+  const showToast = (title: string) => {
+    setToastMessage(`"${title}" added to cart!`);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 3000);
+  };
+
   // ---------- Render ----------
   return (
     <div className="container mt-4 text-center">
+      {/* Cart summary bar */}
+      <div className="d-flex justify-content-end mb-3">
+        <button
+          className="btn btn-success"
+          onClick={() => navigate('/cart', { state: { page: pageNum, category: selectedCategory } })}
+        >
+          🛒 Cart ({cartCount} {cartCount === 1 ? 'item' : 'items'})
+        </button>
+      </div>
       <h1 className="mb-4">📚 Online Bookstore</h1>
 
       {/* Search bar */}
@@ -65,41 +107,75 @@ function BookList() {
         </button>
       </div>
 
-      {/* Book cards */}
-      <div className="row row-cols-1 row-cols-md-2 g-4 mb-4">
-        {books.map((book) => (
-          <div className="col" key={book.bookId}>
-            <div className="card h-100 shadow-sm">
-              <div className="card-body">
-                <h5 className="card-title">{book.title}</h5>
-                <ul className="list-unstyled mb-0">
-                  <li>
-                    <strong>Author:</strong> {book.author}
-                  </li>
-                  <li>
-                    <strong>Publisher:</strong> {book.publisher}
-                  </li>
-                  <li>
-                    <strong>ISBN:</strong> {book.isbn}
-                  </li>
-                  <li>
-                    <strong>Classification:</strong> {book.classification}
-                  </li>
-                  <li>
-                    <strong>Category:</strong> {book.category}
-                  </li>
-                  <li>
-                    <strong>Pages:</strong> {book.pageCount}
-                  </li>
-                  <li>
-                    <strong>Price:</strong> ${book.price.toFixed(2)}
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
+      <div className="mb-3 d-flex flex-wrap justify-content-center gap-2">
+        <button
+          className={`btn ${selectedCategory === '' ? 'btn-dark' : 'btn-outline-dark'}`}
+          onClick={() => { setSelectedCategory(''); setPageNum(1); }}
+        >
+          All
+        </button>
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            className={`btn ${selectedCategory === cat ? 'btn-dark' : 'btn-outline-dark'}`}
+            onClick={() => { setSelectedCategory(cat); setPageNum(1); }}
+          >
+            {cat}
+          </button>
         ))}
       </div>
+
+      {/* Book cards */}
+      {isLoading ? (
+        <div className="d-flex justify-content-center my-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      ) : (
+        <div className="row row-cols-1 row-cols-md-3 g-4 mb-4">
+          {books.map((book) => (
+            <div className="col" key={book.bookId}>
+              <div className="card h-100 shadow-sm">
+                <div className="card-body">
+                  <h5 className="card-title">{book.title}</h5>
+                  <ul className="list-unstyled mb-0">
+                    <li>
+                      <strong>Author:</strong> {book.author}
+                    </li>
+                    <li>
+                      <strong>Publisher:</strong> {book.publisher}
+                    </li>
+                    <li>
+                      <strong>ISBN:</strong> {book.isbn}
+                    </li>
+                    <li>
+                      <strong>Classification:</strong> {book.classification}
+                    </li>
+                    <li>
+                      <strong>Category:</strong> {book.category}
+                    </li>
+                    <li>
+                      <strong>Pages:</strong> {book.pageCount}
+                    </li>
+                    <li>
+                      <strong>Price:</strong> ${book.price.toFixed(2)}
+                    </li>
+                  </ul>
+                  <div className="mt-2">
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => { addToCart(book); showToast(book.title); }}
+                    >
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Pagination buttons */}
       <nav aria-label="Book pagination">
@@ -163,6 +239,25 @@ function BookList() {
           Showing {books.length} of {totalItems} books
         </span>
       </div>
+
+      {/* Toast notification */}
+      {toastVisible && (
+        <div
+          className="toast show position-fixed bottom-0 end-0 m-4"
+          role="alert"
+        >
+          <div className="toast-header bg-success text-white">
+            <strong className="me-auto">🛒 Cart</strong>
+            <button
+              className="btn-close btn-close-white"
+              onClick={() => setToastVisible(false)}
+            />
+          </div>
+          <div className="toast-body">
+            {toastMessage}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -17,7 +17,8 @@ public class BooksController : ControllerBase
         int pageSize = 5,
         int pageNum = 1,
         string sortOrder = "asc",
-        string searchQuery = "")
+        string searchQuery = "",
+        string bookCategory = "")
     {
         // Start with the full Books queryable
         var query = _context.Books.AsQueryable();
@@ -25,6 +26,9 @@ public class BooksController : ControllerBase
         // Filter by title if a search query was provided
         if (!string.IsNullOrWhiteSpace(searchQuery))
             query = query.Where(b => b.Title.ToLower().Contains(searchQuery.ToLower()));
+
+        if (!string.IsNullOrWhiteSpace(bookCategory))
+            query = query.Where(b => b.Category == bookCategory);    
 
         // Sort by Title
         query = sortOrder.ToLower() == "desc"
@@ -43,5 +47,18 @@ public class BooksController : ControllerBase
         // Return both the paged list AND the total count in one response object
         var result = new { books, totalNumBooks };
         return Ok(result);
+    }
+
+    // GET api/books/categories
+    [HttpGet("categories")]
+    public IActionResult GetCategories()
+    {
+        var categories = _context.Books
+            .Select(b => b.Category)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToList();
+
+        return Ok(categories);
     }
 }
