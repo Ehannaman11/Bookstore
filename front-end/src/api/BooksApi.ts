@@ -1,6 +1,6 @@
 import type { Book } from '../types/Book';
 
-const apiUrl = 'https://bookstore-elijah-aedehwfza8e0fsem.francecentral-01.azurewebsites.net/';
+const apiUrl = 'https://bookstore-elijah-aedehwfza8e0fsem.francecentral-01.azurewebsites.net/api/books';
 
 export interface FetchBooksResponse {
   books: Book[];
@@ -66,7 +66,4 @@ export async function deleteBook(bookId: number): Promise<void> {
     });
     if (!response.ok) throw new Error('Failed to delete book');
   } catch (error) {
-    console.error('Error deleting book', error);
-    throw error;
-  }
-}
+    console.error('Error d

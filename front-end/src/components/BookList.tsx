@@ -30,7 +30,7 @@ function BookList() {
   useEffect(() => {
     const fetchBooks = async () => {
       setIsLoading(true);
-      const url = `https://bookstore-elijah-aedehwfza8e0fsem.francecentral-01.azurewebsites.net/books?pageSize=${pageSize}&pageNum=${pageNum}&sortOrder=${sortOrder}&searchQuery=${encodeURIComponent(searchQuery)}&bookCategory=${encodeURIComponent(selectedCategory)}`;
+      const url = `https://bookstore-elijah-aedehwfza8e0fsem.francecentral-01.azurewebsites.net/api/books?pageSize=${pageSize}&pageNum=${pageNum}&sortOrder=${sortOrder}&searchQuery=${encodeURIComponent(searchQuery)}&bookCategory=${encodeURIComponent(selectedCategory)}`;
       const response = await fetch(url);
       const data = await response.json();
 
@@ -45,7 +45,7 @@ function BookList() {
 
   useEffect(() => {
     const fetchCategories = async () => {
-      const response = await fetch('https://bookstore-elijah-aedehwfza8e0fsem.francecentral-01.azurewebsites.net/books/categories');
+      const response = await fetch('https://bookstore-elijah-aedehwfza8e0fsem.francecentral-01.azurewebsites.net/api/books/categories');
       const data = await response.json();
       setCategories(data);
     };
@@ -260,12 +260,4 @@ function BookList() {
             />
           </div>
           <div className="toast-body">
-            {toastMessage}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default BookList;
+         
