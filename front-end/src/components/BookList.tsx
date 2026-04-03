@@ -30,7 +30,7 @@ function BookList() {
   useEffect(() => {
     const fetchBooks = async () => {
       setIsLoading(true);
-      const url = `http://localhost:4000/api/books?pageSize=${pageSize}&pageNum=${pageNum}&sortOrder=${sortOrder}&searchQuery=${encodeURIComponent(searchQuery)}&bookCategory=${encodeURIComponent(selectedCategory)}`;
+      const url = `https://bookstore-elijah-aedehwfza8e0fsem.francecentral-01.azurewebsites.net/books?pageSize=${pageSize}&pageNum=${pageNum}&sortOrder=${sortOrder}&searchQuery=${encodeURIComponent(searchQuery)}&bookCategory=${encodeURIComponent(selectedCategory)}`;
       const response = await fetch(url);
       const data = await response.json();
 
@@ -45,7 +45,7 @@ function BookList() {
 
   useEffect(() => {
     const fetchCategories = async () => {
-      const response = await fetch('http://localhost:4000/api/books/categories');
+      const response = await fetch('https://bookstore-elijah-aedehwfza8e0fsem.francecentral-01.azurewebsites.net/books/categories');
       const data = await response.json();
       setCategories(data);
     };
@@ -78,8 +78,14 @@ function BookList() {
   // ---------- Render ----------
   return (
     <div className="container mt-4 text-center">
-      {/* Cart summary bar */}
-      <div className="d-flex justify-content-end mb-3">
+      {/* Top bar */}
+      <div className="d-flex justify-content-between mb-3">
+        <button
+          className="btn btn-outline-dark"
+          onClick={() => navigate('/adminbooks')}
+        >
+          ⚙️ Admin
+        </button>
         <button
           className="btn btn-success"
           onClick={() => navigate('/cart', { state: { page: pageNum, category: selectedCategory } })}
